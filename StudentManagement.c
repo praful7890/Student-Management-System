@@ -28,17 +28,16 @@ void freeStudentsMemory() {
     free(students);
 }
 
-
 void updateColumnWidth()
 {
 
     for(int i=0;i<StudentCount;i++)
     {
       int idWidth=snprintf(NULL,0,"%d",students[i].id);
-      if(idWidth>IdLength) IdLength=idWidth;
+      if(idWidth>=IdLength) IdLength=idWidth;
 
       int nameWidth=strlen(students[i].name);
-      if(nameWidth>NameLength) NameLength=nameWidth;
+      if(nameWidth>=NameLength) NameLength=nameWidth;
 
     }
 }
@@ -107,6 +106,39 @@ int validateMarks(float marks) {
     return (marks >= 0 && marks <= 100);
 }
 
+void lowercase(){
+    for(int i=0;i<StudentCount;i++){
+        for(int j=0;j<strlen(students[i].name);j++){
+        if(students[i].name[j]>='A' && students[i].name[j]<='Z'){
+            students[i].name[j]+=32;
+        }
+    }
+  }
+}
+// function to capitize searchterm
+char* capitalizeSearchTerm(char* searchTerm){
+   for(int i=0;i<strlen(searchTerm);i++){
+    if((i==0 && searchTerm[i]>='a' && searchTerm[i]<='z') ||
+       (i>0  && searchTerm[i-1]==' ' && searchTerm[i]>='a' && searchTerm[i]<='z')){
+        searchTerm[i]-=32;
+       }
+      }
+      return searchTerm;
+    }
+
+
+void capitalize(){
+    for(int i=0;i<StudentCount;i++){
+        for(int j=0;j<strlen(students[i].name);j++){
+        if((j==0 && students[i].name[j]>='a' && students[i].name[j]<='z' )
+        || (j>0 && students[i].name[j-1]==' ' && students[i].name[j]>='a' && students[i].name[j]<='z')){
+        students[i].name[j]-=32;
+    }
+  }
+ }
+}
+
+
 void loadStudentFromFile() {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
@@ -114,7 +146,7 @@ void loadStudentFromFile() {
         return;
     }
 
-    // Dynamically read and discard the first three header lines
+    // Dynamically read and discard the first two header lines
     char* headerline = NULL;
     size_t len = 0;
     for (int i = 0; i < 2; i++) {
@@ -178,6 +210,7 @@ void sortAndSaveToFile()
     printf("error opening file.\n");
     return;
   }
+
   updateColumnWidth();
 
   // Calculate the width of S.No based on StudentCount
@@ -190,8 +223,10 @@ void sortAndSaveToFile()
        MarksLength, "Marks");
 
       printdash(file);
-
-
+ 
+  // lowercase name
+      lowercase();
+  // sorting according to name
   for(int i=0;i<StudentCount-1;i++)
   {
     for(int j=0;j<StudentCount-i-1;j++)
@@ -205,16 +240,19 @@ void sortAndSaveToFile()
     }
   }
 
+    // capitalizing name before saving to file
+    capitalize();
 
+    // Writing sorted student data to the file
     for (int i = 0; i < StudentCount; i++)
     {
-        // Writing sorted student data to the file
         fprintf(file, " %-*d | %-*d | %-*s | %.2f\n",sNoWidth+1,i+1,IdLength, students[i].id,NameLength, students[i].name, students[i].marks);
     }
+
      printdash(file);
 
      fflush(file);
-  fclose(file);
+     fclose(file);
      printf("Data Saved in File.\n");
   
 }
@@ -227,7 +265,7 @@ void addStudent()
   int idExists=0;
 
   do {
-        printf("\nEnter student ID (numbers only): ");
+        printf("\nEnter student ID (numbers only): ");// enter student ID
         ssize_t len=getline(&IDinput,&idBufferSize, stdin);
 
         if(len==-1)
@@ -270,21 +308,21 @@ void addStudent()
   size_t namaebuffersize=0;
 
    do{
+      printf("\bEnter student name(alphabets and space only): ");
+      ssize_t nlen=getline(&nameIP,&namaebuffersize,stdin);
+       if(nlen==-1) {
+        printf("Error reading input.\n");
+        free(nameIP);
+       return;
+      }
 
-    printf("\bEnter student name(alphabets and space only): ");
-    ssize_t nlen=getline(&nameIP,&namaebuffersize,stdin);
-    if(nlen==-1)
-    {
-      printf("Error reading input.\n");
-      free(nameIP);
-      return;
-    }
+      nameIP[strcspn(nameIP, "\n")] = '\0';
 
-        nameIP[strcspn(nameIP, "\n")] = '\0';
+     if (!validateName(nameIP)) {
+         printf("Invalid Name! Please enter only alphabets and spaces.\n");
+        }
 
-        if (!validateName(nameIP)) {
-            printf("Invalid Name! Please enter only alphabets and spaces.\n");
-  }}while(!validateName(nameIP));
+    }while(!validateName(nameIP));
 
   newStudent.name=malloc(strlen(nameIP)+1);
   if(newStudent.name==NULL)
@@ -351,10 +389,10 @@ int searchStudents()
   int found = 0;
   int isNumericSearch=1;
  
-  getline(&searchTerm,&len,stdin);
+  getline(&searchTerm,&len,stdin);// user input for searchterm
   searchTerm[strcspn(searchTerm,"\n")]='\0';
 
-  for(int i=0;searchTerm[i]!='\0';i++)
+  for(int i=0;searchTerm[i]!='\0';i++)// checking if searchterm is numeric
   {
     if (!isdigit(searchTerm[i]))
     {
@@ -367,6 +405,7 @@ int searchStudents()
     // trailing space for searching.
   if(!isNumericSearch)
  {
+     searchTerm=capitalizeSearchTerm(searchTerm);
   trimTrailingSpaces(searchTerm);
  }
   for(int i=0;i<StudentCount;i++)
@@ -401,6 +440,11 @@ void updateStudents()
     printf("enter student ID or Name to update: ");
     getline(&searchTerm,&len,stdin);
     searchTerm[strcspn(searchTerm, "\n")] = '\0';
+
+    if(!validateNumber(searchTerm)){
+      searchTerm=capitalizeSearchTerm(searchTerm);
+    }
+
 
     // Search through the array of students
 for (int i = 0; i < StudentCount; i++)
@@ -506,7 +550,6 @@ for (int i = 0; i < StudentCount; i++)
 
   }
 
-
 void deleteStudents()
 {
   char *deleteTerm=NULL;
@@ -525,6 +568,10 @@ void deleteStudents()
       isNumericSearch=0;
       break;
     }
+  }
+  // capitalizing delete term
+  if(!isNumericSearch){
+    deleteTerm=capitalizeSearchTerm(deleteTerm);
   }
 
   // search and delete logic
@@ -590,15 +637,16 @@ void  displayStudentsbymarks()
              tempstudents[i].marks = students[i].marks;
 
              tempstudents[i].name = malloc(strlen(students[i].name) + 1);  // memory allocation
+
              if (!tempstudents[i].name) {
-             printf("Memory allocation failed for tempstudents[i].name.\n");
-              // Free previously allocated names
-             for (int k = 0; k < i; k++) {
-             free(tempstudents[k].name);
-               }
-             free(tempstudents);
-              return;
-             }
+                  printf("Memory allocation failed for tempstudents[i].name.\n");
+                  // Free previously allocated names
+                 for (int k = 0; k < i; k++) {
+                 free(tempstudents[k].name);
+                 }
+                 free(tempstudents);
+                 return;
+                }
              strcpy(tempstudents[i].name, students[i].name);
           }
 
@@ -623,17 +671,18 @@ void  displayStudentsbymarks()
           int sNoWidth=sprintf(NULL,0,"%d",StudentCount)+1;
           updateColumnWidth();
 
-              printf("%-*s | %-*s | %-*s | %-*s\n",
-        sNoWidth - 1, "S.No",
-        IdLength, "ID",
-        NameLength, "Name",
-        MarksLength, "Marks");
+         printf("%-*s | %-*s | %-*s | %-*s\n",
+                sNoWidth - 1, "S.No",
+                IdLength, "ID",
+                NameLength, "Name",
+                MarksLength, "Marks");
     
-   int totalWidth=5+sNoWidth+IdLength+NameLength+12;
-     for(int i=0;i<totalWidth+2;i++)
-     printf("-");
+        int totalWidth=5+sNoWidth+IdLength+NameLength+12;
+        for(int i=0;i<totalWidth+2;i++)
+        printf("-");
+        printf("\n");
 
-     printf("\n");
+
        //print data
       for (int i = 0; i < StudentCount; i++) {
         printf(" %-*d | %-*d | %-*s | %.2f\n",
@@ -641,7 +690,7 @@ void  displayStudentsbymarks()
             IdLength, tempstudents[i].id,
             NameLength, tempstudents[i].name,
             tempstudents[i].marks);
-    }
+        }
 
      for(int i=0;i<totalWidth+2;i++)
      printf("-");

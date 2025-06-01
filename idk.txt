@@ -1,0 +1,9 @@
+S.No | ID      | Name                                                        | Marks
+-------------------------------------------------------------------------------------
+ 1   | 1011    | Binod                                                       | 92.00
+ 2   | 45      | Glenn Quagmire                                              | 68.00
+ 3   | 2401146 | Praful Kumar Singh                                          | 83.00
+ 4   | 3       | Ryan Gosling                                                | 32.00
+ 5   | 7       | Thalla                                                      | 7.00
+ 6   | 100     | Ved Pratap Vidrohi Gopal Iyer Kamlesh Wagle Muthuswami Iyer | 55.00
+-------------------------------------------------------------------------------------
